@@ -8,6 +8,7 @@ import pickle
 from nltk.tokenize import sent_tokenize, word_tokenize
 from sklearn import svm
 from sklearn.metrics import accuracy_score
+from sklearn.model_selection import train_test_split
 dim = 25
 
 # def loadGloveModel(gloveFile):
@@ -119,9 +120,9 @@ Y=np.array(Y)
 # print(X.shape)
 # print(X)
 
-win_size = 10
+win_size = 5
 w = np.random.rand(dim,) #intialize model
-test = 80
+test = 50
 
 X_final = np.empty((0,dim))
 for indices in X:
@@ -161,20 +162,87 @@ for indices in X:
                     total_vec = np.add(total_vec, vec)
                     count+=1
 
+    else:
+        split_token = tokens[indices[0]][indices[1]].split('.')
+        i = 0
+        j=0
+        while(j < len(split_token)):
+                i = i+1
+                re1 = re.search(r'(\w)+\W(\w)+', split_token[j].lower())
+                re2 = re.search(r'(\w)+',split_token[j].lower())
+                if re1:
+                    try:
+                        vec = my_word_vec[re1.group()]
+                        total_vec = np.add(total_vec, vec)
+                        count+=1
+
+                    except:
+                        count+=0
+                elif re2:
+                    try:
+                        vec = my_word_vec[re2.group()]
+                        total_vec = np.add(total_vec, vec)
+                        count+=1
+                    except:
+                        count+=0
+                j = j+1
+
+        while(i < win_size):
+            index_left = indices[1]-i-1
+            if index_left >= 0:
+                re1 = re.search(r'(\w)+\W(\w)+', tokens[indices[0]][index_left].lower())
+                re2 = re.search(r'(\w)+',tokens[indices[0]][index_left].lower())
+                if re1:
+                    try:
+                        vec = my_word_vec[re1.group()]
+                        total_vec = np.add(total_vec, vec)
+                        count+=1
+                    except:
+                        count+=0
+                elif re2:
+                    try:
+                        vec = my_word_vec[re2.group()]
+                        total_vec = np.add(total_vec, vec)
+                        count+=1
+                    except:
+                        count+=0
+            index_right = indices[1]+i+1
+
+            if index_right < len(tokens[indices[0]]):
+                re1 = re.search(r'(\w)+\W(\w)+', tokens[indices[0]][index_right].lower())
+                re2 = re.search(r'(\w)+',tokens[indices[0]][index_right].lower())
+                if re1:
+                    vec = my_word_vec[re1.group()]
+                    total_vec = np.add(total_vec, vec)
+                    count+=1
+                elif re2:
+                    vec = my_word_vec[re2.group()]
+                    total_vec = np.add(total_vec, vec)
+                    count+=1
+
+            i+=1
+
+
     if count != 0:
         total_vec = np.divide(total_vec, count)
 
     X_final = np.append(X_final, [total_vec], axis=0)
 
+
+
 Y_true = Y
 # print(X_final.shape, Y_final.shape)
-clf = svm.SVC()
+clf = svm.SVC(class_weight="balanced")
+# clf = svm.SVC(kernel='rbf')
+
+X_train, X_test, Y_train, Y_test = train_test_split( X_final, Y_true, test_size=0.33, random_state=42)
+
 try:
-    clf.fit(X_final[test:], Y_true[test:])
+    clf.fit(X_train, Y_train)
 except:
     print("Can't Classify : only 1 unique label found")
     exit()
-Y_pred = clf.predict(X_final[:test])
-print(Y_true[:test], Y_pred)
-print(accuracy_score(Y_true[:test], Y_pred))
+Y_pred = clf.predict(X_test)
+print("Test : ", Y_test, "\n\nPrediction : ", Y_pred)
+print("Accuracy : ", accuracy_score(Y_test, Y_pred))
 
