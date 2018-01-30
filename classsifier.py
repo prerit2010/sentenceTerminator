@@ -121,55 +121,60 @@ Y=np.array(Y)
 
 win_size = 10
 w = np.random.rand(dim,) #intialize model
-test = 90
+test = 80
 
 X_final = np.empty((0,dim))
 for indices in X:
-	total_vec = np.zeros(dim,)
-	count = 0
-	if tokens[indices[0]][indices[1]] == ".":
-		for i in range(win_size):
-			index_left = indices[1]-i-1
-			if index_left >= 0:
-				re1 = re.search(r'(\w)+\W(\w)+', tokens[indices[0]][index_left].lower())
-				re2 = re.search(r'(\w)+',tokens[indices[0]][index_left].lower())
-				if re1:
-					try:
-						vec = my_word_vec[re1.group()]
-						total_vec = np.add(total_vec, vec)
-						count+=1
-					except:
-						count+=0
-				elif re2:
-					try:
-						vec = my_word_vec[re2.group()]
-						total_vec = np.add(total_vec, vec)
-						count+=1
-					except:
-						count+=0
-			index_right = indices[1]+i+1
+    total_vec = np.zeros(dim,)
+    count = 0
+    if tokens[indices[0]][indices[1]] == ".":
+        for i in range(win_size):
+            index_left = indices[1]-i-1
+            if index_left >= 0:
+                re1 = re.search(r'(\w)+\W(\w)+', tokens[indices[0]][index_left].lower())
+                re2 = re.search(r'(\w)+',tokens[indices[0]][index_left].lower())
+                if re1:
+                    try:
+                        vec = my_word_vec[re1.group()]
+                        total_vec = np.add(total_vec, vec)
+                        count+=1
+                    except:
+                        count+=0
+                elif re2:
+                    try:
+                        vec = my_word_vec[re2.group()]
+                        total_vec = np.add(total_vec, vec)
+                        count+=1
+                    except:
+                        count+=0
+            index_right = indices[1]+i+1
 
-			if index_right < len(tokens[indices[0]]):
-				re1 = re.search(r'(\w)+\W(\w)+', tokens[indices[0]][index_right].lower())
-				re2 = re.search(r'(\w)+',tokens[indices[0]][index_right].lower())
-				if re1:
-					vec = my_word_vec[re1.group()]
-					total_vec = np.add(total_vec, vec)
-					count+=1
-				elif re2:
-					vec = my_word_vec[re2.group()]
-					total_vec = np.add(total_vec, vec)
-					count+=1
+            if index_right < len(tokens[indices[0]]):
+                re1 = re.search(r'(\w)+\W(\w)+', tokens[indices[0]][index_right].lower())
+                re2 = re.search(r'(\w)+',tokens[indices[0]][index_right].lower())
+                if re1:
+                    vec = my_word_vec[re1.group()]
+                    total_vec = np.add(total_vec, vec)
+                    count+=1
+                elif re2:
+                    vec = my_word_vec[re2.group()]
+                    total_vec = np.add(total_vec, vec)
+                    count+=1
 
-	if count != 0:
-		total_vec = np.divide(total_vec, count)
+    if count != 0:
+        total_vec = np.divide(total_vec, count)
 
-	X_final = np.append(X_final, [total_vec], axis=0)
+    X_final = np.append(X_final, [total_vec], axis=0)
 
 Y_true = Y
 # print(X_final.shape, Y_final.shape)
 clf = svm.SVC()
-clf.fit(X_final[test:], Y_true[test:])
+try:
+    clf.fit(X_final[test:], Y_true[test:])
+except:
+    print("Can't Classify : only 1 unique label found")
+    exit()
 Y_pred = clf.predict(X_final[:test])
 print(Y_true[:test], Y_pred)
 print(accuracy_score(Y_true[:test], Y_pred))
+
