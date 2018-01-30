@@ -230,7 +230,7 @@ Y_true = Y
 
 clf = svm.SVC()
 # clf = svm.SVC(kernel='rbf')
-X_train, X_test, Y_train, Y_test = train_test_split( X_final, Y_true, test_size=0.33, random_state=42)
+X_train, X_test, Y_train, Y_test = train_test_split(X_final, Y_true, test_size=0.33, random_state=42)
 
 try:
     clf.fit(X_train, Y_train)
