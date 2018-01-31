@@ -9,7 +9,7 @@ from nltk.tokenize import sent_tokenize, word_tokenize
 from sklearn import svm
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
-dim = 200
+dim = 25
 win_size = 2
 
 def loadGloveModel(gloveFile):
@@ -67,55 +67,121 @@ def create_word_vec(dimension):
 
 my_word_vec = load_obj("my_word_vec" + str(dim))
 
+
 file = open("data/train2.txt",'r')
-story = file.read()
+story=file.read()
 file.close()
-convo = re.findall(r'\"(.+?)\"', story, re.S)
+convo= re.findall(r'\"(.+?)\"',story,re.S)
 for i,str1 in enumerate(convo):
-    story = story.replace("\""+str1+"\"", "id"+str(i))
+    if(story.find("\""+str1+"\"")) ==-1:
+        print("\""+str1+"\""+"NOT FOUND")
 
+    story=story.replace("\""+str1+"\"","id"+str(i))
 for i in range(len(convo)):
-    if(convo[i][-1] == "."):
-        convo[i] = convo[i][0:-1] + "@"
-    convo[i] = convo[i].replace(".", "#")
-    convo[i] = convo[i].replace("@", ".")
+    if convo[i][-1]==".":
+        convo[i]=convo[i][0:-1]+"@"
+    if convo[i][-1] == "?":
+        convo[i] = convo[i][0:-1]+"$"
+    convo[i]=convo[i].replace("?","&")
+    convo[i]=convo[i].replace(".","#")
+    convo[i]=convo[i].replace("$","?")
+    convo[i]=convo[i].replace("@",".")
 
-i = len(convo)-1
-
+i=len(convo)-1
 for str1 in reversed(convo):
-    story = story.replace("id" + str(i), "\"" + str1 + "\"")
-    i -= 1
+    story=story.replace("id"+str(i),"\""+str1+"\"")
+    i-=1
 
-sentences = re.findall(r'<s>(.+?)</s>',story,re.S)
-tokens = []
-
+file = open("data/train2.txt",'r')
+story=re.sub(r'\?(\s*\"*\s*</s>)',r'??\1',story)
+# print(story)
+sentences=re.findall(r'<s>(.+?)</s>',story,re.S)
+tokens=[]
 for i in range(len(sentences)):
     tokens.append(nltk.word_tokenize(sentences[i]))
-
 X=[]
 Y=[]
-
+#print(tokens)
+j=0
 for i in range(len(tokens)):
-    for j in range((len(tokens[i]))):
+    while j<(len(tokens[i])):
 
-        if(tokens[i][j].find(".") != -1 and j != len(tokens[i])-1) and tokens[i][j+1] != "''":
+        if(tokens[i][j].find(".")!=-1 and j!=len(tokens[i])-1) and tokens[i][j+1]!="''":
             X.append([i, j])
             Y.append(0)
-        elif tokens[i][j].find(".") != -1 :
+        elif tokens[i][j].find(".")!=-1 :
             X.append([i, j])
             Y.append(1)
 
+        if (tokens[i][j].find("?")!=-1 and j!=len(tokens[i])-1) and tokens[i][j]=="?" and  tokens[i][j+1]!="?":
+            X.append([i, j])
+            Y.append(0)
 
+        elif (tokens[i][j].find("?")!=-1 and j!=len(tokens[i])-1) and tokens[i][j]=="?" and  tokens[i][j+1]=="?":
+            X.append([i, j])
+            Y.append(1)
+            j=j+1
+
+        j=j+1
+    j=0
 X=np.array(X)
 Y=np.array(Y)
 
-w = np.random.rand(dim,) #intialize model
+print(X.shape, Y.shape)
+print(Y)
+
+
+
+
+
+# story = file.read()
+# file.close()
+# convo = re.findall(r'\"(.+?)\"', story, re.S)
+# for i,str1 in enumerate(convo):
+#     story = story.replace("\""+str1+"\"", "id"+str(i))
+
+# for i in range(len(convo)):
+#     if(convo[i][-1] == "."):
+#         convo[i] = convo[i][0:-1] + "@"
+#     convo[i] = convo[i].replace(".", "#")
+#     convo[i] = convo[i].replace("@", ".")
+
+# i = len(convo)-1
+
+# for str1 in reversed(convo):
+#     story = story.replace("id" + str(i), "\"" + str1 + "\"")
+#     i -= 1
+
+# sentences = re.findall(r'<s>(.+?)</s>',story,re.S)
+# tokens = []
+
+# for i in range(len(sentences)):
+#     tokens.append(nltk.word_tokenize(sentences[i]))
+
+# X=[]
+# Y=[]
+
+# for i in range(len(tokens)):
+#     for j in range((len(tokens[i]))):
+
+#         if(tokens[i][j].find(".") != -1 and j != len(tokens[i])-1) and tokens[i][j+1] != "''":
+#             X.append([i, j])
+#             Y.append(0)
+#         elif tokens[i][j].find(".") != -1 :
+#             X.append([i, j])
+#             Y.append(1)
+
+
+# X=np.array(X)
+# Y=np.array(Y)
+
+# w = np.random.rand(dim,) #intialize model
 
 X_final = np.empty((0,dim))
 for indices in X:
     total_vec = np.zeros(dim,)
     count = 0
-    if tokens[indices[0]][indices[1]] == ".":
+    if tokens[indices[0]][indices[1]] == "." or "?":
         for i in range(win_size):
             index_left = indices[1]-i-1
             if index_left >= 0:
