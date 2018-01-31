@@ -1,80 +1,86 @@
 import re
 
 file=open("output/output.txt",'r')
-story=file.read()
+text=file.read()
 file.close()
 
-story=re.sub(re.compile(r'\"(.+?)(\.)\"',re.S),r'"\1\2"#\2',story)
-story=re.sub(re.compile(r'\"(.+?)(\?)(\s*)\"(\n\n)',re.S),r'"\1\2\3"#\4',story)
-story=re.sub(re.compile(r'\"(.+?)(\?)(\s*)\"(\s*[A-Z])',re.S),r'"\1\2\3"#.\4',story)
+# if the text ends with a . append a #
+text = re.sub(re.compile(r'\"(.+?)(\.)\"',re.S),r'"\1\2"#\2',text)
+# if the text end with a ? and new paragraph, append a # at the end.
+text = re.sub(re.compile(r'\"(.+?)(\?)(\s*)\"(\n\n)',re.S),r'"\1\2\3"#\4',text)
+# append a # and . if the text ends with a ?, and a new sentence starts after it.
+text = re.sub(re.compile(r'\"(.+?)(\?)(\s*)\"(\s*[A-Z])',re.S),r'"\1\2\3"#.\4',text)
 
+# find the quoted text.
+matches = re.findall(r'\"(.+?)\"',text,re.S)
+#print(text)
+for i,mystr in enumerate(matches):
+    # replace the quoted text with a unique id at every place
+    text = text.replace("\""+mystr+"\"","id"+str(i))
 
-matches=re.findall(r'\"(.+?)\"',story,re.S)
-#print(story)
-for i,str1 in enumerate(matches):
-    if(story.find("\""+str1+"\"")) ==-1:
-        print("\""+str1+"\""+"NOT FOUND")
+#find the acronyms in the text
+exceptions = re.findall(r'(?:[A-Z]\.\s)+',text)
+# Create a list of possible negative examples of sentence terminators.
+special = ['Mr. ', 'Ms. ', 'Mrs. ', 'Dr. ', 'No. ', 'Sr. ', 'Jr. ']
+exceptions = exceptions + special
+exceptions.sort()
 
-    story=story.replace("\""+str1+"\"","id"+str(i))
-#print(story)
+i = len(exceptions)-1
+for mystr in reversed(exceptions):
+    # replace these 
+    text = text.replace(mystr,"acc_"+str(i))
+    i -= 1
 
+# insert a dollar symbol before ? to differenciate.
+text = re.sub(r'\?',r'$?',text)
+# split on \n\n, that is the paragraphs
+paragraphs = text.split('\n\n')
 
-acronyms=re.findall(r'(?:[A-Z]\.\s)+',story)
+tagged_lines=[]
 
-acronyms.append('Mr. ')
-acronyms.append('Ms. ')
-acronyms.append('Mrs. ')
-acronyms.append('Dr. ')
-acronyms.append('No. ')
-acronyms.append('Sr. ')
-acronyms.append('Jr. ')
-acronyms.sort()
-print(acronyms)
-i=len(acronyms)-1
-for str1 in reversed(acronyms):
-    story=story.replace(str1,"acc_"+str(i))
-    i-=1
-#print(story)
-story=re.sub(r'\?',r'$?',story)
-para=story.split('\n\n')
-# print(story)
-sentences=[]
+for i in range(len(paragraphs)):
+    # Split the paragraphs on . or ?
+    tagged_lines.append(re.split('\.|\?',paragraphs[i]))
 
-for i in range(len(para)):
-    sentences.append(re.split('\.|\?',para[i]))
-#print(sentences)
-for j in range(len(sentences)):
-    for k in range(len(sentences[j])):
-        if len(sentences[j][k])>1:
-            sentences[j][k]="<s>"+sentences[j][k]+"</s>"
-story=""
-#print(sentences)
-for j in range(len(sentences)):
-    for k in range(len(sentences[j])):
-        if len(sentences[j][k]) > 1 and sentences[j][k].find('$')==len(sentences[j][k])-5  :
-            story = story + sentences[j][k][0:-5] + "?" + sentences[j][k][-4:len(sentences[j][k])]
-        elif len(sentences[j][k]) > 1 and k<len(sentences[j])-1:
-            story=story+sentences[j][k][0:-4]+"."+sentences[j][k][-4:len(sentences[j][k])]
-        elif len(sentences[j][k]) > 1 and k==len(sentences[j])-1:
-            story=story+sentences[j][k]
+# As the negative examples of . and ? have been removed, we can apply the tags.
+for j in range(len(tagged_lines)):
+    for k in range(len(tagged_lines[j])):
+        if len(tagged_lines[j][k])>1:
+            tagged_lines[j][k]="<s>" + tagged_lines[j][k] + "</s>"
 
-    story=story+"\n\n"
-#print(story)
-story=re.sub(r'\#(\.)',"",story)
-story=re.sub(r'\#',"",story)
-i=len(matches)-1
-for str1 in reversed(matches):
-    story=story.replace("id"+str(i),"\""+str1+"\"")
-    i-=1
-#print(story)
-i=len(acronyms)-1
-for str1 in reversed(acronyms):
-    story=story.replace("acc_"+str(i),str1)
-    i-=1
-#print(story)
+text = ""
 
+for j in range(len(tagged_lines)):
+    for k in range(len(tagged_lines[j])):
+        # insert a ? if $ is found in the text
+        if len(tagged_lines[j][k]) > 1 and tagged_lines[j][k].find('$') == len(tagged_lines[j][k])-5 :
+            text = text + tagged_lines[j][k][0:-5] + "?" + tagged_lines[j][k][-4:len(tagged_lines[j][k])]
+        # else insert .
+        elif len(tagged_lines[j][k]) > 1 and k < len (tagged_lines[j])-1:
+            text=text+tagged_lines[j][k][0:-4]+"."+tagged_lines[j][k][-4:len(tagged_lines[j][k])]
+        elif len(tagged_lines[j][k]) > 1 and k == len(tagged_lines[j])-1:
+            text=text+tagged_lines[j][k]
 
-#print(story)
-file=open("output/train.txt",'w')
-file.write(story)
+    text = text + "\n\n"
+
+# Remove all #. inserted before
+text = re.sub(r'\#(\.)',"",text)
+# remove #
+text = re.sub(r'\#',"",text)
+i = len(matches)-1
+
+for mystr in reversed(matches):
+    # replace back the unique ids with strings
+    text=text.replace("id"+str(i),"\""+mystr+"\"")
+    i -= 1
+
+i = len(exceptions)-1
+for mystr in reversed(exceptions):
+    # replace the unique ids with the accronyms
+    text = text.replace("acc_"+str(i),mystr)
+    i -= 1
+
+# Save the final txt in the train.txt file
+file = open("output/train.txt",'w')
+file.write(text)
 file.close()
