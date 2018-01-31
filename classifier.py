@@ -9,7 +9,7 @@ from nltk.tokenize import sent_tokenize, word_tokenize
 from sklearn import svm
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
-dim = 25
+dim = 200
 win_size = 2
 
 def loadGloveModel(gloveFile):
@@ -26,7 +26,7 @@ def loadGloveModel(gloveFile):
 
 def save_obj(obj, name ):
     with open('obj/'+ name + '.pkl', 'wb') as f:
-        pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
+        pickle.dump(obj, f, protocol=2)
 
 def load_obj(name ):
     with open('obj/' + name + '.pkl', 'rb') as f:
@@ -63,7 +63,7 @@ def create_word_vec(dimension):
     save_obj(my_word_vec, "my_word_vec" + str(dimension))
 
 
-# create_word_vec(dim)
+# create_word_vec(dim)    
 
 my_word_vec = load_obj("my_word_vec" + str(dim))
 
@@ -73,8 +73,8 @@ story=file.read()
 file.close()
 convo= re.findall(r'\"(.+?)\"',story,re.S)
 for i,str1 in enumerate(convo):
-    if(story.find("\""+str1+"\"")) ==-1:
-        print("\""+str1+"\""+"NOT FOUND")
+    # if(story.find("\""+str1+"\"")) ==-1:
+    #     print("\""+str1+"\""+"NOT FOUND")
 
     story=story.replace("\""+str1+"\"","id"+str(i))
 for i in range(len(convo)):
@@ -93,7 +93,7 @@ for str1 in reversed(convo):
     i-=1
 
 story=re.sub(r'\?(\s*\"*\s*</s>)',r'??\1',story)
-print(story)
+# print(story)
 sentences=re.findall(r'<s>(.+?)</s>',story,re.S)
 tokens=[]
 for i in range(len(sentences)):
