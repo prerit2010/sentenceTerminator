@@ -35,7 +35,7 @@ def load_obj(name ):
 def create_word_vec(dimension):
     word_vec = loadGloveModel("data/27Bx" + str(dimension) + "d.txt")
 
-    file = open("data/test2.txt")
+    file = open("text/test2.txt")
     text = file.read()
     token = word_tokenize(text)
     token = set(token)
@@ -68,7 +68,7 @@ def create_word_vec(dimension):
 my_word_vec = load_obj("my_word_vec" + str(dim))
 
 
-file = open("data/train2.txt",'r')
+file=open("output/train.txt",'r')
 story=file.read()
 file.close()
 convo= re.findall(r'\"(.+?)\"',story,re.S)
@@ -92,9 +92,8 @@ for str1 in reversed(convo):
     story=story.replace("id"+str(i),"\""+str1+"\"")
     i-=1
 
-file = open("data/train2.txt",'r')
 story=re.sub(r'\?(\s*\"*\s*</s>)',r'??\1',story)
-# print(story)
+print(story)
 sentences=re.findall(r'<s>(.+?)</s>',story,re.S)
 tokens=[]
 for i in range(len(sentences)):
@@ -126,56 +125,8 @@ for i in range(len(tokens)):
     j=0
 X=np.array(X)
 Y=np.array(Y)
-
-print(X.shape, Y.shape)
-print(Y)
-
-
-
-
-
-# story = file.read()
-# file.close()
-# convo = re.findall(r'\"(.+?)\"', story, re.S)
-# for i,str1 in enumerate(convo):
-#     story = story.replace("\""+str1+"\"", "id"+str(i))
-
-# for i in range(len(convo)):
-#     if(convo[i][-1] == "."):
-#         convo[i] = convo[i][0:-1] + "@"
-#     convo[i] = convo[i].replace(".", "#")
-#     convo[i] = convo[i].replace("@", ".")
-
-# i = len(convo)-1
-
-# for str1 in reversed(convo):
-#     story = story.replace("id" + str(i), "\"" + str1 + "\"")
-#     i -= 1
-
-# sentences = re.findall(r'<s>(.+?)</s>',story,re.S)
-# tokens = []
-
-# for i in range(len(sentences)):
-#     tokens.append(nltk.word_tokenize(sentences[i]))
-
-# X=[]
-# Y=[]
-
-# for i in range(len(tokens)):
-#     for j in range((len(tokens[i]))):
-
-#         if(tokens[i][j].find(".") != -1 and j != len(tokens[i])-1) and tokens[i][j+1] != "''":
-#             X.append([i, j])
-#             Y.append(0)
-#         elif tokens[i][j].find(".") != -1 :
-#             X.append([i, j])
-#             Y.append(1)
-
-
-# X=np.array(X)
-# Y=np.array(Y)
-
-# w = np.random.rand(dim,) #intialize model
+# print(Y.shape)
+# print(X,Y)
 
 X_final = np.empty((0,dim))
 for indices in X:
