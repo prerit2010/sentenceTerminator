@@ -9,8 +9,8 @@ from nltk.tokenize import sent_tokenize, word_tokenize
 from sklearn import svm
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
-dim = 25
-win_size = 1
+dim = 50
+win_size = 5
 
 def loadGloveModel(gloveFile):
     print("Loading vectors")
